@@ -22,6 +22,8 @@ from pytorch3d.transforms import rotation_6d_to_matrix
 from cubercnn.modeling.roi_heads import build_roi_heads
 from cubercnn import util, vis
 
+import cv2
+
 @META_ARCH_REGISTRY.register()
 class RCNN3D(GeneralizedRCNN):
 
@@ -154,6 +156,20 @@ class RCNN3D(GeneralizedRCNN):
             )
             prop_img = v_pred.get_image()
             vis_img_rpn = np.concatenate((anno_img, prop_img), axis=1)
+
+            # show image sequence id, frame id
+            seq_name, frame_id = input.get("sequence_name", None), input.get("frame_id", None)
+            vis_img_rpn = cv2.putText(
+                vis_img_rpn,
+                f"{seq_name}, {frame_id}",
+                (0, 20),  # location
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,  # fontScale
+                (255, 0, 0),  # color
+                1,  # thickness
+                cv2.LINE_AA
+            )
+
             vis_img_rpn = vis_img_rpn.transpose(2, 0, 1)
             storage.put_image("Left: GT 2D bounding boxes; Right: Predicted 2D proposals", vis_img_rpn)
 
@@ -237,6 +253,19 @@ class RCNN3D(GeneralizedRCNN):
 
             # horizontal stack 3D GT and pred left/right
             vis_img_3d = np.concatenate((img_3DGT, img_3DPR), axis=1)
+
+            # show image sequence id, frame id
+            vis_img_3d = cv2.putText(
+                vis_img_3d,
+                f"{seq_name}, {frame_id}",
+                (0, 20),  # location
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,  # fontScale
+                (0, 0, 255),  # color
+                1,  # thickness
+                cv2.LINE_AA
+            )
+
             vis_img_3d = vis_img_3d[:, :, [2, 1, 0]] # RGB
             vis_img_3d = vis_img_3d.astype(np.uint8).transpose(2, 0, 1)
 
